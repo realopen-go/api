@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  admin:
+    build:
+      args:
+        app: admin
+        target: development
+      context: .
+      dockerfile: Dockerfile
