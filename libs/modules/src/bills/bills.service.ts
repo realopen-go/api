@@ -11,11 +11,57 @@ export class BillsService {
     private readonly billRepository: Repository<Bill>,
   ) {}
 
+  async findAllPrivate(
+    page = 1,
+    pageSize = 10,
+    query: {
+      userId?: string;
+    } = {},
+  ): Promise<[Bill[], number]> {
+    const queryBuilder = this.billRepository
+      .createQueryBuilder('bill')
+      .leftJoinAndSelect('bill.user', 'user');
+
+    if (query.userId) {
+      queryBuilder.where('user.id = :userId', {
+        userId: query.userId,
+      });
+    }
+
+    const [bills, count] = await queryBuilder
+      .select([
+        'bill.bill_id',
+        'bill.bill_title',
+        'bill.content',
+        'bill.open_type',
+        'bill.open_status',
+        'bill.processor_code',
+        'bill.processor_department_name',
+        'bill.processor_drafter_name',
+        'bill.processor_drafter_position',
+        'bill.processor_name',
+        'bill.processor_rstr_number',
+        'bill.processor_reviewer_name',
+        'bill.processor_reviewer_position',
+        'bill.processor_sts_cd',
+        'bill.request_content',
+        'bill.request_date',
+        'user.id',
+        'user.username',
+      ])
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .orderBy('bill.request_date', 'DESC')
+      .getManyAndCount();
+    return [bills, Math.floor(count / pageSize) + (count % pageSize ? 1 : 0)];
+  }
+
   async findAllPublic(
     page = 1,
     pageSize = 10,
     query: {
       memberName?: string;
+      userId?: string;
     } = {},
   ): Promise<[Bill[], number]> {
     const queryBuilder = this.billRepository
@@ -25,6 +71,12 @@ export class BillsService {
     if (query.memberName) {
       queryBuilder.where('user.username = :memberName', {
         memberName: query.memberName,
+      });
+    }
+
+    if (query.userId) {
+      queryBuilder.where('user.id = :userId', {
+        userId: query.userId,
       });
     }
 
