@@ -33,7 +33,7 @@ export class AuthService {
   }): Promise<{ token: string; user: User }> {
     const user = await this.usersService.findOne({ username });
     if (!user) {
-      throw errors.NOT_FOUND_ENTITY_ERROR('사용자를 찾을 수 없습니다.');
+      throw errors.UNAUTHORIZED_ERROR('사용자를 찾을 수 없습니다.');
     }
 
     if (!user.password) {

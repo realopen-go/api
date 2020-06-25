@@ -16,6 +16,6 @@ async function bootstrap() {
 
   app.useGlobalGuards(new GlobalAuthGuard(reflector));
   app.use(cookieParser());
-  await app.listen(3000);
+  await app.listen(4000);
 }
 bootstrap();
