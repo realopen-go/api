@@ -1,10 +1,13 @@
-import { Controller, Get, Query, Req } from '@nestjs/common';
+import { Controller, Get, Query, Req, Put, Body } from '@nestjs/common';
 import { Bill, User } from '@app/entities';
-import { BillsService } from '@app/modules';
+import { BillsService, UsersService } from '@app/modules';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly billsService: BillsService) {}
+  constructor(
+    private readonly billsService: BillsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Get(':id/bills')
   async FindBills(
@@ -20,5 +23,15 @@ export class UsersController {
     );
 
     return { bills, pageCount };
+  }
+
+  @Put('me')
+  async UpdateMe(
+    @Body('embagoMonth') embagoMonth: number,
+    @Req() req,
+  ): Promise<boolean> {
+    const user: User = req.user;
+    await this.usersService.updateEmbago(user.id, { embagoMonth });
+    return true;
   }
 }

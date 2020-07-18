@@ -12,7 +12,7 @@ export class BillsController {
     @Query('memberName') memberName = '',
     @Query('page') page = 1,
     @Query('pageSize') pageSize = 10,
-  ): Promise<{ bills: Bill[]; pageCount: number }> {
+  ): Promise<{ bills: { [key: string]: Bill[] }; pageCount: number }> {
     const [bills, pageCount] = await this.billsService.findAllPublic(
       page,
       pageSize,

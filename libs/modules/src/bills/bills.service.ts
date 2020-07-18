@@ -1,14 +1,17 @@
-import { Repository } from 'typeorm';
+import { Repository, Db, getConnection } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Bill } from '@app/entities/bill.entity';
+import { Bill, User } from '@app/entities';
+import { format } from '@app/utils/date';
 
 @Injectable()
 export class BillsService {
   constructor(
     @InjectRepository(Bill)
     private readonly billRepository: Repository<Bill>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async findAllPrivate(
@@ -21,6 +24,12 @@ export class BillsService {
     const queryBuilder = this.billRepository
       .createQueryBuilder('bill')
       .leftJoinAndSelect('bill.user', 'user');
+
+    if (query.userId) {
+      queryBuilder.where('user.id = :userId', {
+        userId: query.userId,
+      });
+    }
 
     if (query.userId) {
       queryBuilder.where('user.id = :userId', {
@@ -63,27 +72,44 @@ export class BillsService {
       memberName?: string;
       userId?: string;
     } = {},
-  ): Promise<[Bill[], number]> {
-    const queryBuilder = this.billRepository
+  ): Promise<[{ [key: string]: Bill[] }, number]> {
+    const publicDate = format(new Date());
+    const multiIdsFilteringQueryBuilder = await this.billRepository
       .createQueryBuilder('bill')
-      .leftJoinAndSelect('bill.user', 'user');
+      .groupBy('bill.multi_id')
+      .where('bill.public_date < :publicDate', {
+        publicDate,
+      })
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .orderBy('bill.request_date', 'DESC');
 
     if (query.memberName) {
-      queryBuilder.where('user.username = :memberName', {
+      multiIdsFilteringQueryBuilder.andWhere('user.username = :memberName', {
         memberName: query.memberName,
       });
     }
 
     if (query.userId) {
-      queryBuilder.where('user.id = :userId', {
+      multiIdsFilteringQueryBuilder.andWhere('user.id = :userId', {
         userId: query.userId,
       });
     }
 
-    const [bills, count] = await queryBuilder
+    const [billsForMultiId, [{ count }]] = await Promise.all([
+      multiIdsFilteringQueryBuilder.getMany(),
+      getConnection().query(
+        'SELECT COUNT(bill.multi_id) as count From (SELECT multi_id, count(multi_id) from bills group by multi_id) as bill',
+      ),
+    ]);
+
+    const bills = await this.billRepository
+      .createQueryBuilder('bill')
+      .leftJoinAndSelect('bill.user', 'user')
       .select([
         'bill.bill_id',
         'bill.bill_title',
+        'bill.multi_id',
         'bill.open_type',
         'bill.open_status',
         'bill.processor_code',
@@ -100,10 +126,25 @@ export class BillsService {
         'user.id',
         'user.username',
       ])
-      .skip((page - 1) * pageSize)
-      .take(pageSize)
-      .orderBy('bill.request_date', 'DESC')
-      .getManyAndCount();
-    return [bills, Math.floor(count / pageSize) + (count % pageSize ? 1 : 0)];
+      .where('bill.multi_id IN (:multiIds)', {
+        multiIds: billsForMultiId.map(bill => bill.multi_id),
+      })
+      .getMany();
+
+    const billsMap = {};
+    let index = 1;
+    bills.forEach(bill => {
+      if (billsMap[bill.multi_id]) {
+        billsMap[bill.multi_id].bills.push(bill);
+      } else {
+        billsMap[bill.multi_id] = { bills: [bill], index };
+        index++;
+      }
+    });
+
+    return [
+      billsMap,
+      Math.floor(count / pageSize) + (count % pageSize ? 1 : 0),
+    ];
   }
 }

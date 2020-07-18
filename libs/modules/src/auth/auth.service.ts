@@ -20,8 +20,8 @@ export class AuthService {
   }: {
     origin: string;
     target: string;
-  }): Promise<boolean> {
-    return bcrypt.compare(target, origin);
+  }): boolean {
+    return bcrypt.compareSync(target, origin);
   }
 
   async signIn({
@@ -40,9 +40,7 @@ export class AuthService {
       throw errors.BAD_REQUEST_ERROR('사용자 비밀번호를 설정해주세요.');
     }
 
-    if (
-      !(await this.comparePassword({ origin: user.password, target: password }))
-    ) {
+    if (!this.comparePassword({ origin: user.password, target: password })) {
       throw errors.UNAUTHORIZED_ERROR('비밀번호가 틀렸습니다.');
     }
 

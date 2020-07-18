@@ -22,6 +22,11 @@ export class Bill {
   content: string;
 
   @Column({
+    nullable: false,
+  })
+  multi_id: string;
+
+  @Column({
     length: 100,
     nullable: true,
   })
@@ -32,6 +37,11 @@ export class Bill {
     nullable: true,
   })
   open_status: string;
+
+  @Column({
+    nullable: true,
+  })
+  public_date: string;
 
   @Column({
     length: 100,

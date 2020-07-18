@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@app/entities';
+import { User, Bill } from '@app/entities';
 
 import { AuthService } from './auth.service';
 import { JWT_SECRET } from '../global-auth/constants';
@@ -14,7 +14,7 @@ export { AuthService };
     JwtModule.register({
       secret: JWT_SECRET,
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([Bill, User]),
   ],
   providers: [AuthService, UsersService],
   exports: [AuthService],

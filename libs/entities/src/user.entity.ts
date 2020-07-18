@@ -19,4 +19,10 @@ export class User {
 
   @Column()
   password: string;
+
+  /**
+   * Optional
+   */
+  @Column()
+  embago_month: number;
 }
