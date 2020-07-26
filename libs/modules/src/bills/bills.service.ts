@@ -70,7 +70,7 @@ export class BillsService {
     pageSize = 10,
     query: {
       memberName?: string;
-      userId?: string;
+      text?: string;
     } = {},
   ): Promise<[{ [key: string]: Bill[] }, number]> {
     const publicDate = format(new Date());
@@ -90,9 +90,9 @@ export class BillsService {
       });
     }
 
-    if (query.userId) {
-      multiIdsFilteringQueryBuilder.andWhere('user.id = :userId', {
-        userId: query.userId,
+    if (query.text) {
+      multiIdsFilteringQueryBuilder.andWhere('bill.bill_title LIKE :text', {
+        text: `%${query.text}%`,
       });
     }
 
