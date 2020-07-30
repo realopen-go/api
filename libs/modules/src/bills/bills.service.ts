@@ -77,9 +77,12 @@ export class BillsService {
     const multiIdsFilteringQueryBuilder = await this.billRepository
       .createQueryBuilder('bill')
       .groupBy('bill.multi_id')
-      .where('bill.public_date < :publicDate', {
-        publicDate,
-      })
+      .where(
+        'bill.public_date < :publicDate AND bill.public_date IS NOT NULL',
+        {
+          publicDate,
+        },
+      )
       .skip((page - 1) * pageSize)
       .take(pageSize)
       .orderBy('bill.request_date', 'DESC');
