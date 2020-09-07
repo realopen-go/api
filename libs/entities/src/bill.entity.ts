@@ -4,39 +4,26 @@ import { User } from './user.entity';
 @Entity('bills')
 export class Bill {
   @PrimaryColumn({
-    length: 32,
+    length: 16,
     unique: true,
   })
-  bill_id: string;
-
-  @Column({
-    length: 100,
-    nullable: true,
-  })
-  bill_title: string;
+  id: string;
 
   @Column({
     nullable: true,
     type: 'text',
   })
-  content: string;
+  result_description: string;
 
   @Column({
     nullable: false,
   })
-  multi_id: string;
-
-  @Column({
-    length: 100,
-    nullable: true,
-  })
-  open_type: string;
+  group_id: string;
 
   @Column({
     length: 10,
-    nullable: true,
   })
-  open_status: string;
+  status: string;
 
   @Column({
     nullable: true,
@@ -44,64 +31,35 @@ export class Bill {
   public_date: string;
 
   @Column({
-    length: 100,
-    nullable: true,
+    length: 32,
   })
-  processor_code: string;
+  request_proc_registration_number: string;
 
   @Column({
-    length: 100,
-    nullable: true,
+    length: 32,
   })
-  processor_department_name: string;
+  registration_number: string;
 
   @Column({
-    length: 100,
-    nullable: true,
+    length: 32,
   })
-  processor_drafter_name: string;
+  proc_org_code: string;
 
   @Column({
-    length: 100,
-    nullable: true,
+    length: 32,
   })
-  processor_drafter_position: string;
+  proc_org_name: string;
 
   @Column({
-    length: 100,
-    nullable: true,
+    length: 32,
   })
-  processor_name: string;
-
-  @Column({
-    length: 100,
-    nullable: true,
-  })
-  processor_rstr_number: string;
-
-  @Column({
-    length: 100,
-    nullable: true,
-  })
-  processor_reviewer_name: string;
-
-  @Column({
-    length: 100,
-    nullable: true,
-  })
-  processor_reviewer_position: string;
-
-  @Column({
-    length: 100,
-    nullable: true,
-  })
-  processor_sts_cd: string;
+  proc_registration_number: string;
 
   @Column({
     nullable: true,
     type: 'text',
   })
-  request_content: string;
+  request_description: string;
 
   @Column({
     nullable: true,
@@ -109,7 +67,13 @@ export class Bill {
   request_date: string;
 
   @Column({
-    length: 128,
+    nullable: true,
+    type: 'text',
+  })
+  request_subject: string;
+
+  @Column({
+    length: 32,
     nullable: true,
   })
   user_id: string;

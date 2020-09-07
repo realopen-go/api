@@ -19,7 +19,7 @@ export class UsersController {
     const [bills, pageCount] = await this.billsService.findAllPrivate(
       page,
       pageSize,
-      { userId: user.id },
+      { userId: user.username },
     );
 
     return { bills, pageCount };
@@ -31,7 +31,7 @@ export class UsersController {
     @Req() req,
   ): Promise<boolean> {
     const user: User = req.user;
-    await this.usersService.updateEmbago(user.id, { embagoMonth });
+    await this.usersService.updateEmbago(user.username, { embagoMonth });
     return true;
   }
 }

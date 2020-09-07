@@ -15,12 +15,8 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  findOne({ id = '', username = '' }): Promise<User> {
+  findOne({ username = '' }): Promise<User> {
     const where: FindConditions<User> = {};
-
-    if (id) {
-      where.id = id;
-    }
 
     if (username) {
       where.username = username;
@@ -32,7 +28,7 @@ export class UsersService {
   }
 
   async updateEmbago(
-    id: string,
+    username: string,
     {
       embagoMonth,
     }: {
@@ -41,7 +37,7 @@ export class UsersService {
   ): Promise<UpdateResult> {
     const bills = await this.billRepository.find({
       where: {
-        user_id: id,
+        user_id: username,
       },
     });
 
@@ -53,7 +49,7 @@ export class UsersService {
 
       await this.billRepository.update(
         {
-          bill_id: bills[i].bill_id,
+          id: bills[i].id,
         },
         {
           public_date: publicDate,
@@ -63,7 +59,7 @@ export class UsersService {
 
     return this.userRepository.update(
       {
-        id,
+        username,
       },
       {
         embago_month: embagoMonth,

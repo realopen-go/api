@@ -1,28 +1,26 @@
-import { Column, Entity, PrimaryColumn, Unique } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('users')
 export class User {
-  @PrimaryColumn({
-    length: 128,
-    unique: true,
-  })
-  id: string;
-
   /**
    * Required
    */
-  @Column({
-    length: 128,
-    unique: true,
+  @PrimaryColumn({
+    length: 100,
   })
   username: string;
 
-  @Column()
+  @Column({
+    length: 100,
+    nullable: true,
+  })
   password: string;
 
   /**
    * Optional
    */
-  @Column()
+  @Column({
+    nullable: true,
+  })
   embago_month: number;
 }

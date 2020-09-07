@@ -26,36 +26,31 @@ export class BillsService {
       .leftJoinAndSelect('bill.user', 'user');
 
     if (query.userId) {
-      queryBuilder.where('user.id = :userId', {
+      queryBuilder.where('user.username = :userId', {
         userId: query.userId,
       });
     }
 
     if (query.userId) {
-      queryBuilder.where('user.id = :userId', {
+      queryBuilder.where('user.username = :userId', {
         userId: query.userId,
       });
     }
 
     const [bills, count] = await queryBuilder
       .select([
-        'bill.bill_id',
-        'bill.bill_title',
-        'bill.content',
-        'bill.open_type',
-        'bill.open_status',
-        'bill.processor_code',
-        'bill.processor_department_name',
-        'bill.processor_drafter_name',
-        'bill.processor_drafter_position',
-        'bill.processor_name',
-        'bill.processor_rstr_number',
-        'bill.processor_reviewer_name',
-        'bill.processor_reviewer_position',
-        'bill.processor_sts_cd',
-        'bill.request_content',
+        'bill.id',
+        'bill.result_description',
+        'bill.group_id',
+        'bill.status',
+        'bill.request_proc_registration_number',
+        'bill.registration_number',
+        'bill.proc_org_code',
+        'bill.proc_org_name',
+        'bill.proc_registration_number',
+        'bill.request_description',
         'bill.request_date',
-        'user.id',
+        'bill.request_subject',
         'user.username',
       ])
       .skip((page - 1) * pageSize)
@@ -76,7 +71,7 @@ export class BillsService {
     const publicDate = format(new Date());
     const multiIdsFilteringQueryBuilder = await this.billRepository
       .createQueryBuilder('bill')
-      .groupBy('bill.multi_id')
+      .groupBy('bill.group_id')
       .where(
         'bill.public_date < :publicDate AND bill.public_date IS NOT NULL',
         {
@@ -94,15 +89,18 @@ export class BillsService {
     }
 
     if (query.text) {
-      multiIdsFilteringQueryBuilder.andWhere('bill.bill_title LIKE :text', {
-        text: `%${query.text}%`,
-      });
+      multiIdsFilteringQueryBuilder.andWhere(
+        'bill.request_subject LIKE :text',
+        {
+          text: `%${query.text}%`,
+        },
+      );
     }
 
     const [billsForMultiId, [{ count }]] = await Promise.all([
       multiIdsFilteringQueryBuilder.getMany(),
       getConnection().query(
-        'SELECT COUNT(bill.multi_id) as count From (SELECT multi_id, count(multi_id) from bills group by multi_id) as bill',
+        'SELECT COUNT(bill.group_id) as count From (SELECT group_id, count(group_id) from bills group by group_id) as bill',
       ),
     ]);
 
@@ -110,37 +108,32 @@ export class BillsService {
       .createQueryBuilder('bill')
       .leftJoinAndSelect('bill.user', 'user')
       .select([
-        'bill.bill_id',
-        'bill.bill_title',
-        'bill.multi_id',
-        'bill.open_type',
-        'bill.open_status',
-        'bill.processor_code',
-        'bill.processor_department_name',
-        'bill.processor_drafter_name',
-        'bill.processor_drafter_position',
-        'bill.processor_name',
-        'bill.processor_rstr_number',
-        'bill.processor_reviewer_name',
-        'bill.processor_reviewer_position',
-        'bill.processor_sts_cd',
-        'bill.request_content',
+        'bill.id',
+        'bill.result_description',
+        'bill.group_id',
+        'bill.status',
+        'bill.request_proc_registration_number',
+        'bill.registration_number',
+        'bill.proc_org_code',
+        'bill.proc_org_name',
+        'bill.proc_registration_number',
+        'bill.request_description',
         'bill.request_date',
-        'user.id',
+        'bill.request_subject',
         'user.username',
       ])
-      .where('bill.multi_id IN (:multiIds)', {
-        multiIds: billsForMultiId.map(bill => bill.multi_id),
+      .where('bill.group_id IN (:multiIds)', {
+        multiIds: billsForMultiId.map(bill => bill.group_id),
       })
       .getMany();
 
     const billsMap = {};
     let index = 1;
     bills.forEach(bill => {
-      if (billsMap[bill.multi_id]) {
-        billsMap[bill.multi_id].bills.push(bill);
+      if (billsMap[bill.group_id]) {
+        billsMap[bill.group_id].bills.push(bill);
       } else {
-        billsMap[bill.multi_id] = { bills: [bill], index };
+        billsMap[bill.group_id] = { bills: [bill], index };
         index++;
       }
     });
