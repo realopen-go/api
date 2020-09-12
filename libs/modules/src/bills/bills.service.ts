@@ -75,9 +75,13 @@ export class BillsService {
       .where(
         'bill.public_date < :publicDate AND bill.public_date IS NOT NULL',
         {
+          empty: '',
           publicDate,
         },
       )
+      .andWhere('bill.public_date <> :empty', {
+        empty: ' ',
+      })
       .skip((page - 1) * pageSize)
       .take(pageSize)
       .orderBy('bill.request_date', 'DESC');
@@ -100,47 +104,50 @@ export class BillsService {
     const [billsForMultiId, [{ count }]] = await Promise.all([
       multiIdsFilteringQueryBuilder.getMany(),
       getConnection().query(
-        'SELECT COUNT(bill.group_id) as count From (SELECT group_id, count(group_id) from bills group by group_id) as bill',
+        `SELECT COUNT(bill.group_id) as count From (SELECT group_id, count(group_id) from bills  WHERE public_date <> '' AND public_date < '${publicDate}' AND public_date IS NOT NULL group by group_id) as bill`,
       ),
     ]);
 
-    const bills = await this.billRepository
-      .createQueryBuilder('bill')
-      .leftJoinAndSelect('bill.user', 'user')
-      .select([
-        'bill.id',
-        'bill.result_description',
-        'bill.group_id',
-        'bill.status',
-        'bill.request_proc_registration_number',
-        'bill.registration_number',
-        'bill.proc_org_code',
-        'bill.proc_org_name',
-        'bill.proc_registration_number',
-        'bill.request_description',
-        'bill.request_date',
-        'bill.request_subject',
-        'user.username',
-      ])
-      .where('bill.group_id IN (:multiIds)', {
-        multiIds: billsForMultiId.map(bill => bill.group_id),
-      })
-      .getMany();
+    if (billsForMultiId.length) {
+      const bills = await this.billRepository
+        .createQueryBuilder('bill')
+        .leftJoinAndSelect('bill.user', 'user')
+        .select([
+          'bill.id',
+          'bill.result_description',
+          'bill.group_id',
+          'bill.status',
+          'bill.request_proc_registration_number',
+          'bill.registration_number',
+          'bill.proc_org_code',
+          'bill.proc_org_name',
+          'bill.proc_registration_number',
+          'bill.request_description',
+          'bill.request_date',
+          'bill.request_subject',
+          'user.username',
+        ])
+        .where('bill.group_id IN (:multiIds)', {
+          multiIds: billsForMultiId.map(bill => bill.group_id),
+        })
+        .getMany();
 
-    const billsMap = {};
-    let index = 1;
-    bills.forEach(bill => {
-      if (billsMap[bill.group_id]) {
-        billsMap[bill.group_id].bills.push(bill);
-      } else {
-        billsMap[bill.group_id] = { bills: [bill], index };
-        index++;
-      }
-    });
+      const billsMap = {};
+      let index = 1;
+      bills.forEach(bill => {
+        if (billsMap[bill.group_id]) {
+          billsMap[bill.group_id].bills.push(bill);
+        } else {
+          billsMap[bill.group_id] = { bills: [bill], index };
+          index++;
+        }
+      });
 
-    return [
-      billsMap,
-      Math.floor(count / pageSize) + (count % pageSize ? 1 : 0),
-    ];
+      return [
+        billsMap,
+        Math.floor(count / pageSize) + (count % pageSize ? 1 : 0),
+      ];
+    }
+    return [{}, 0];
   }
 }
