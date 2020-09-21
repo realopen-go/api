@@ -1,8 +1,8 @@
-import { Repository, Db, getConnection } from 'typeorm';
+import { Repository, getConnection } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Bill, User } from '@app/entities';
+import { Bill, File, User } from '@app/entities';
 import { format } from '@app/utils/date';
 
 @Injectable()
@@ -10,6 +10,8 @@ export class BillsService {
   constructor(
     @InjectRepository(Bill)
     private readonly billRepository: Repository<Bill>,
+    @InjectRepository(File)
+    private readonly fileRepository: Repository<File>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
@@ -134,14 +136,21 @@ export class BillsService {
 
       const billsMap = {};
       let index = 1;
-      bills.forEach(bill => {
+
+      for (let i = 0; i < bills.length; i++) {
+        const bill = bills[i];
+        const files = await this.fileRepository.find({
+          where: {
+            bill_id: bill.registration_number,
+          },
+        });
         if (billsMap[bill.group_id]) {
-          billsMap[bill.group_id].bills.push(bill);
+          billsMap[bill.group_id].bills.push({ ...bill, files });
         } else {
-          billsMap[bill.group_id] = { bills: [bill], index };
+          billsMap[bill.group_id] = { bills: [{ ...bill, files }], index };
           index++;
         }
-      });
+      }
 
       return [
         billsMap,

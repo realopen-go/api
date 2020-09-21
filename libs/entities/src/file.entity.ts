@@ -14,7 +14,7 @@ export class File {
   filename: string;
 
   @Column({
-    length: 100,
+    length: 32,
   })
-  bill_id: number;
+  bill_id: string;
 }
